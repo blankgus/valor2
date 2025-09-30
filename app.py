@@ -3,64 +3,50 @@ import pandas as pd
 import requests
 import os
 
-# Configuração
-API_URL = "https://colegiopauliceia.com/schoolvalor-api/api.php"
-API_SECRET = os.getenv("API_SECRET", "fallback_temporario")
+API_URL = "https://www.colegiopauliceia.com/schoolvalor-api/api.php"
+API_SECRET = os.getenv("API_SECRET", "10XP20to30")
 
-# ==============================
-# FUNÇÕES DE INTEGRAÇÃO COM A API (FICAM AQUI!)
-# ==============================
-def get_schools_from_api():
-    """Busca lista de escolas da API no seu VPS"""
+def get_schools():
     try:
         response = requests.get(f"{API_URL}?secret={API_SECRET}", timeout=10)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        st.error(f"❌ Erro de conexão com API: {str(e)}")
-        if 'response' in locals():
-            st.code(f"Resposta bruta: {response.text[:300]}...")
-        return []
-    except ValueError:
-        st.error("❌ Resposta inválida da API (não é JSON)")
-        if 'response' in locals():
-            st.code(f"Resposta recebida: {response.text[:500]}")
+        return response.json() if response.status_code == 200 else []
+    except:
         return []
 
-def save_school_to_api(name, estado, valor_liquido):
-    """Salva escola na API do seu VPS"""
+def save_school(name, estado, valor):
     try:
         response = requests.post(
             f"{API_URL}?secret={API_SECRET}",
-            json={"name": name, "estado": estado, "valor_liquido": valor_liquido},
+            json={"name": name, "estado": estado, "valor_liquido": valor},
             timeout=10
         )
-        response.raise_for_status()
         return response.json()
     except Exception as e:
         return {"error": str(e)}
 
-# ==============================
-# APP PRINCIPAL (Streamlit)
-# ==============================
-st.title("SchoolValuation Pro+")
+# --- APP ---
+st.title("🏫 Cadastro de Escolas (Teste)")
 
-# Listar escolas
-schools = get_schools_from_api()
+# Listar
+st.subheader("Escolas Cadastradas")
+schools = get_schools()
 if schools:
-    st.dataframe(pd.DataFrame(schools))
+    df = pd.DataFrame(schools)
+    st.dataframe(df[['name', 'estado', 'valor_liquido']])
 
 # Formulário
+st.subheader("Cadastrar Nova Escola")
 name = st.text_input("Nome da Escola")
-estado = st.selectbox("Estado", ["SP", "RJ"])
-valor = st.number_input("Valor")
+estado = st.selectbox("Estado", ["SP", "RJ", "MG"])
+valor = st.number_input("Valor Líquido", min_value=0.0)
 
 if st.button("Salvar"):
-    result = save_school_to_api(name, estado, valor)
-    if "error" in result:
-        st.error(f"Erro: {result['error']}")
+    if not name:
+        st.error("Nome é obrigatório!")
     else:
-        st.success("Salvo!")
-
-
-
+        result = save_school(name, estado, valor)
+        if "error" in result:
+            st.error(f"Erro: {result['error']}")
+        else:
+            st.success("✅ Salvo com sucesso!")
+            st.experimental_rerun()
