@@ -5,7 +5,7 @@ import os
 
 # Configuração
 API_URL = "https://colegiopauliceia.com/schoolvalor-api/api.php"
-API_SECRET = os.getenv("API_SECRET", "SUA_SENHA_AQUI")
+API_SECRET = os.getenv("API_SECRET", "10XP20to30")
 
 # ==============================
 # FUNÇÕES DE INTEGRAÇÃO COM A API (FICAM AQUI!)
@@ -61,3 +61,4 @@ if st.button("Salvar"):
         st.error(f"Erro: {result['error']}")
     else:
         st.success("Salvo!")
+
