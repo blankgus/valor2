@@ -5,7 +5,7 @@ import os
 
 # Configuração da API
 API_URL = "https://colegiopauliceia.com/schoolvalor-api/api.php"
-API_SECRET = os.getenv("API_SECRET", "SUA_SENHA_SECRETA_AQUI")  # Defina no Streamlit Cloud
+API_SECRET = os.getenv("API_SECRET", "10XP20to30")  # Defina no Streamlit Cloud
 
 def save_school_to_api(name, estado, valor_liquido):
     """Salva escola na API do VPS"""
@@ -72,3 +72,4 @@ st.markdown(
     "Acesse o sistema de documentos: "
     "[🔗 Gerenciar Documentos](https://colegiopauliceia.com/schoolvalor-docs/)"
 )
+
