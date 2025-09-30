@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import os
 
-API_URL = "https://www.colegiopauliceia.com/schoolvalor-api/api.php"
+API_URL = "https://api.colegiopauliceia.com/schoolvalor-api/api.php"
 API_SECRET = os.getenv("API_SECRET", "10XP20to30")
 
 def get_schools():
@@ -50,3 +50,4 @@ if st.button("Salvar"):
         else:
             st.success("✅ Salvo com sucesso!")
             st.experimental_rerun()
+
