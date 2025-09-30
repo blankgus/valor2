@@ -1,213 +1,10 @@
 import streamlit as st
 import pandas as pd
-import os
-import sqlite3
-from dotenv import load_dotenv
-
-# Carregar configurações
-load_dotenv()
-
-# Configurações do projeto
-PROJECT_ROOT = os.getenv("PROJECT_ROOT", os.getcwd())
-DB_PATH = os.getenv("DB_PATH", os.path.join(PROJECT_ROOT, "school_valuation.db"))
-UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", os.path.join(PROJECT_ROOT, "uploads"))
-
-# Criar pastas necessárias
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-
-# Verificar permissões
-if not os.access(PROJECT_ROOT, os.W_OK):
-    st.error(f"❌ Sem permissão de escrita em: {PROJECT_ROOT}")
-    st.stop()
-
-# ==============================
-# BANCO DE DADOS (com tratamento de erros)
-# ==============================
-def init_db():
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS schools (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE,
-                estado TEXT,
-                valor_liquido REAL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        conn.commit()
-        conn.close()
-        return True
-    except Exception as e:
-        st.error(f"❌ Erro ao criar banco de dados em {DB_PATH}: {str(e)}")
-        st.stop()
-
-# Inicializar BD imediatamente
-init_db()
-
-# ==============================
-# LOGIN SIMPLES
-# ==============================
-def check_password():
-    if "logged_in" not in st.session_state:
-        st.session_state.logged_in = False
-
-    if not st.session_state.logged_in:
-        user = st.text_input("Usuário", value=os.getenv("USERNAME", "admin"))
-        pwd = st.text_input("Senha", type="password")
-        if st.button("Entrar"):
-            if user == os.getenv("USERNAME") and pwd == os.getenv("PASSWORD"):
-                st.session_state.logged_in = True
-                st.experimental_rerun()
-            else:
-                st.error("Usuário ou senha incorretos")
-        st.stop()
-
-# ==============================
-# APP PRINCIPAL
-# ==============================
-if __name__ == "__main__":
-    check_password()
-    
-    st.title("🏫 SchoolValuation Pro+ v4")
-    st.success(f"✅ Banco de dados ativo em: {DB_PATH}")
-    st.info(f"📁 Uploads salvos em: {UPLOAD_FOLDER}")
-
-    # --- FORMULÁRIO ---
-    school_name = st.text_input("Nome da Escola")
-    estado = st.selectbox("Estado", ["SP", "RJ", "MG"])
-    valor = st.number_input("Valor Líquido (R$)", min_value=0.0)
-
-    if st.button("💾 Salvar"):
-        if not school_name:
-            st.error("Nome é obrigatório!")
-        else:
-            try:
-                conn = sqlite3.connect(DB_PATH)
-                c = conn.cursor()
-                c.execute(
-                    "INSERT INTO schools (name, estado, valor_liquido) VALUES (?, ?, ?)",
-                    (school_name, estado, valor)
-                )
-                conn.commit()
-                conn.close()
-                st.success("✅ Escola salva com sucesso!")
-            except Exception as e:
-                st.error(f"❌ Erro ao salvar: {str(e)}")
-
-    # --- LISTAR ESCOLAS ---
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        df = pd.read_sql_query("SELECT * FROM schools", conn)
-        conn.close()
-        if not df.empty:
-            st.dataframe(df)
-    except Exception as e:
-        st.error(f"Erro ao carregar escolas: {str(e)}")import streamlit as st
-import pandas as pd
 import matplotlib.pyplot as plt
 import io
-import os
-import sqlite3
-from datetime import datetime
-from dotenv import load_dotenv
-
-# Carregar configurações
-load_dotenv()
-USERNAME = os.getenv("USERNAME", "admin")
-PASSWORD = os.getenv("PASSWORD", "senha")
-DB_PATH = os.getenv("DB_PATH", "school_valuation.db")
-UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
-
-# Criar pastas
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ==============================
-# BANCO DE DADOS
-# ==============================
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    # Tabela de escolas
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS schools (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            estado TEXT,
-            alunos_total INTEGER,
-            capacidade_total INTEGER,
-            receita_anual REAL,
-            ebitda_ajustado REAL,
-            valor_liquido REAL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    # Tabela de dados detalhados
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS valuation_data (
-            school_id INTEGER PRIMARY KEY,
-            dados_json TEXT,
-            FOREIGN KEY(school_id) REFERENCES schools(id)
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-def save_school(name, estado, alunos, capacidade, receita, ebitda, valor):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    try:
-        c.execute('''
-            INSERT OR REPLACE INTO schools 
-            (name, estado, alunos_total, capacidade_total, receita_anual, ebitda_ajustado, valor_liquido)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (name, estado, alunos, capacidade, receita, ebitda, valor))
-        school_id = c.lastrowid
-        conn.commit()
-        return school_id
-    except Exception as e:
-        st.error(f"Erro ao salvar: {e}")
-        return None
-    finally:
-        conn.close()
-
-def save_valuation_data(school_id, dados_dict):
-    import json
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    try:
-        c.execute('''
-            INSERT OR REPLACE INTO valuation_data (school_id, dados_json)
-            VALUES (?, ?)
-        ''', (school_id, json.dumps(dados_dict)))
-        conn.commit()
-    finally:
-        conn.close()
-
-def get_schools():
-    conn = sqlite3.connect(DB_PATH)
-    df = pd.read_sql_query("SELECT * FROM schools ORDER BY name", conn)
-    conn.close()
-    return df
-
-def get_valuation_data(school_id):
-    import json
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT dados_json FROM valuation_data WHERE school_id = ?", (school_id,))
-    row = c.fetchone()
-    conn.close()
-    if row:
-        return json.loads(row[0])
-    return None
-
-# Inicializar BD
-init_db()
-
-# ==============================
-# FUNÇÕES AUXILIARES (mantidas)
+# FUNÇÕES AUXILIARES
 # ==============================
 def calcular_ebitda_ajustado(ebitda_contabil, despesas_nao_recorrentes=0, pro_labore_excedente=0, receitas_nao_recorrentes=0, multas_e_juros=0):
     ajustes = despesas_nao_recorrentes + pro_labore_excedente + multas_e_juros - receitas_nao_recorrentes
@@ -234,92 +31,141 @@ def gerar_due_diligence_excel():
     return output.getvalue()
 
 # ==============================
-# LOGIN
-# ==============================
-def check_password():
-    def password_entered():
-        if st.session_state["password"] == PASSWORD:
-            st.session_state["password_correct"] = True
-            del st.session_state["password"]
-        else:
-            st.session_state["password_correct"] = False
-
-    if "password_correct" not in st.session_state:
-        st.text_input("Usuário", value=USERNAME, disabled=True)
-        st.text_input("Senha", type="password", on_change=password_entered, key="password")
-        return False
-    elif not st.session_state["password_correct"]:
-        st.text_input("Usuário", value=USERNAME, disabled=True)
-        st.text_input("Senha", type="password", on_change=password_entered, key="password")
-        st.error("Senha incorreta")
-        return False
-    else:
-        return True
-
-# ==============================
 # APP PRINCIPAL
 # ==============================
-if __name__ == "__main__":
-    if check_password():
-        st.set_page_config(page_title="SchoolValuation Pro+ v4", layout="wide")
-        st.title("🏫 SchoolValuation Pro+ v4")
-        st.markdown("Sistema profissional com banco de dados e gerenciamento de escolas.")
+st.set_page_config(page_title="SchoolValuation Pro+ v5", layout="wide")
+st.title("🏫 SchoolValuation Pro+ v5")
+st.markdown("Valuation profissional para escolas particulares.")
 
-        # --- SELEÇÃO/REGISTRO DE ESCOLA ---
-        st.header("🏫 Gerenciar Escolas")
-        schools_df = get_schools()
-        school_names = ["Nova Escola"] + schools_df["name"].tolist() if not schools_df.empty else ["Nova Escola"]
-        selected_school = st.selectbox("Selecione uma escola", school_names)
+# --- LINK PARA DOCUMENTOS ---
+st.header("📎 Documentos Comprobatórios")
+st.markdown(
+    "Para enviar ou visualizar documentos da sua escola, acesse nosso sistema seguro: "
+    "[🔗 Gerenciar Documentos](https://colegiopauliceia.com/schoolvalor-docs/)"
+)
 
-        # Carregar dados se não for nova
-        loaded_data = {}
-        if selected_school != "Nova Escola":
-            school_row = schools_df[schools_df["name"] == selected_school].iloc[0]
-            loaded_data = get_valuation_data(school_row["id"])
-            st.success(f"✅ Carregando dados de: {selected_school}")
+# --- RESTANTE DO VALUATION (sem banco de dados) ---
+st.header("1. Dados Operacionais")
+col1, col2 = st.columns(2)
+with col1:
+    alunos_ei = st.number_input("Alunos - Educação Infantil", min_value=0, value=100)
+    capacidade_ei = st.number_input("Capacidade máxima (EI)", min_value=1, value=120)
+    alunos_ef1 = st.number_input("Alunos - Ensino Fundamental I", min_value=0, value=120)
+    capacidade_ef1 = st.number_input("Capacidade máxima (EF1)", min_value=1, value=140)
+    alunos_ef2 = st.number_input("Alunos - Ensino Fundamental II", min_value=0, value=100)
+    capacidade_ef2 = st.number_input("Capacidade máxima (EF2)", min_value=1, value=120)
+    alunos_em = st.number_input("Alunos - Ensino Médio", min_value=0, value=80)
+    capacidade_em = st.number_input("Capacidade máxima (EM)", min_value=1, value=100)
 
-        # --- FORMULÁRIO DE DADOS ---
-        st.header("1. Dados da Escola")
-        col1, col2 = st.columns(2)
-        with col1:
-            school_name = st.text_input("Nome da Escola", value=loaded_data.get("school_name", "") if loaded_data else "")
-            estado = st.selectbox("Estado", ["SP", "RJ", "MG", "RS", "PR"], 
-                                index=["SP", "RJ", "MG", "RS", "PR"].index(loaded_data.get("estado", "SP")) if loaded_data else 0)
+with col2:
+    mensalidade_ei = st.number_input("Mensalidade média (EI)", min_value=0.0, value=600.0)
+    mensalidade_ef1 = st.number_input("Mensalidade média (EF1)", min_value=0.0, value=750.0)
+    mensalidade_ef2 = st.number_input("Mensalidade média (EF2)", min_value=0.0, value=900.0)
+    mensalidade_em = st.number_input("Mensalidade média (EM)", min_value=0.0, value=1100.0)
 
-        # Restante dos inputs (exemplo com EI)
-        with col2:
-            alunos_ei = st.number_input("Alunos - EI", min_value=0, value=loaded_data.get("alunos_ei", 100))
-            capacidade_ei = st.number_input("Capacidade (EI)", min_value=1, value=loaded_data.get("capacidade_ei", 120))
-            # ... (repita para EF1, EF2, EM, mensalidades, etc.)
+st.header("2. Custos, Estrutura e Passivos")
+col3, col4 = st.columns(2)
+with col3:
+    custos_diretos_percent = st.slider("Custos diretos (%)", 0, 100, 40) / 100
+    despesas_admin_percent = st.slider("Despesas administrativas (%)", 0, 100, 15) / 100
+    impostos_percent = st.slider("Impostos (%)", 0, 30, 8) / 100
 
-        # --- SALVAR ESCOLA ---
-        if st.button("💾 Salvar Escola e Calcular Valuation"):
-            if not school_name:
-                st.error("Nome da escola é obrigatório!")
-            else:
-                # Aqui você faria todos os cálculos (receita, ebitda, etc.)
-                # Exemplo simplificado:
-                receita_total = 3_840_000  # Substitua pelos cálculos reais
-                ebitda_ajustado = 1_428_000
-                valor_liquido = 11_600_000
+with col4:
+    tem_imovel = st.radio("Imóvel próprio?", ("Não", "Sim"), horizontal=True)
+    if tem_imovel == "Sim":
+        valor_imovel = st.number_input("Valor de mercado do imóvel (R$)", min_value=0.0, value=3000000.0)
+        valor_instalacoes = 0.0
+    else:
+        valor_imovel = 0.0
+        aluguel_mensal = st.number_input("Aluguel mensal (R$)", min_value=0.0, value=25000.0)
+        valor_instalacoes = st.number_input(
+            "Valor estimado das instalações (R$)", 
+            min_value=0.0, 
+            value=500000.0,
+            help="Ex: laboratórios, quadras, mobiliário, tecnologia."
+        )
+    divida_fiscal = st.number_input("Dívidas fiscais (R$)", min_value=0.0, value=0.0)
+    divida_financeira = st.number_input("Dívidas financeiras (R$)", min_value=0.0, value=0.0)
 
-                # Salvar na tabela principal
-                school_id = save_school(school_name, estado, 400, 480, receita_total, ebitda_ajustado, valor_liquido)
-                
-                # Salvar dados detalhados
-                all_data = {
-                    "school_name": school_name,
-                    "estado": estado,
-                    "alunos_ei": alunos_ei,
-                    "capacidade_ei": capacidade_ei,
-                    # ... todos os outros campos
-                }
-                if school_id:
-                    save_valuation_data(school_id, all_data)
-                    st.success("✅ Escola salva com sucesso!")
-                    st.experimental_rerun()
+multiplo_ebitda = st.slider("Múltiplo de EBITDA", 2.0, 10.0, 6.0, step=0.5)
 
-        # --- LISTA DE ESCOLAS ---
-        if not schools_df.empty:
-            st.header("📋 Escolas Cadastradas")
-            st.dataframe(schools_df[["name", "estado", "alunos_total", "valor_liquido"]].style.format({"valor_liquido": "R$ {:,.0f}"}))
+# --- CÁLCULOS ---
+receita_ei = alunos_ei * mensalidade_ei * 12
+receita_ef1 = alunos_ef1 * mensalidade_ef1 * 12
+receita_ef2 = alunos_ef2 * mensalidade_ef2 * 12
+receita_em = alunos_em * mensalidade_em * 12
+receita_total = receita_ei + receita_ef1 + receita_ef2 + receita_em
+
+aluguel_anual = aluguel_mensal * 12 if tem_imovel == "Não" else 0
+custos_diretos = receita_total * custos_diretos_percent
+despesas_admin = receita_total * despesas_admin_percent
+ebitda_contabil = receita_total - custos_diretos - despesas_admin - aluguel_anual
+
+total_alunos = alunos_ei + alunos_ef1 + alunos_ef2 + alunos_em
+capacidade_total = capacidade_ei + capacidade_ef1 + capacidade_ef2 + capacidade_em
+taxa_ocupacao = total_alunos / capacidade_total if capacidade_total > 0 else 0
+total_passivos = divida_fiscal + divida_financeira
+
+st.header("3. Ajuste de EBITDA")
+col_adj1, col_adj2, col_adj3, col_adj4 = st.columns(4)
+desp_nao_rec = col_adj1.number_input("Despesas não recorrentes", value=0.0)
+pro_labore_exc = col_adj2.number_input("Pró-labore excedente", value=0.0)
+multas = col_adj3.number_input("Multas e juros", value=0.0)
+receitas_nao_rec = col_adj4.number_input("Receitas não recorrentes", value=0.0)
+
+ebitda_ajustado, total_ajustes = calcular_ebitda_ajustado(
+    ebitda_contabil, desp_nao_rec, pro_labore_exc, receitas_nao_rec, multas
+)
+
+# --- DEMONSTRATIVO FINANCEIRO ---
+st.header("📊 Demonstrativo Financeiro Anual")
+df_financeiro = pd.DataFrame({
+    "Item": [
+        "Receita Bruta",
+        "(-) Custos Diretos",
+        "(-) Despesas Administrativas",
+        "(-) Aluguel",
+        "(=) EBITDA Contábil",
+        "(+/-) Ajustes",
+        "(=) EBITDA Ajustado"
+    ],
+    "Valor (R$)": [
+        receita_total,
+        -custos_diretos,
+        -despesas_admin,
+        -aluguel_anual,
+        ebitda_contabil,
+        total_ajustes,
+        ebitda_ajustado
+    ]
+})
+st.dataframe(df_financeiro.style.format({"Valor (R$)": "R$ {:,.0f}"}), use_container_width=True)
+
+# --- VALUATION ---
+valor_ebitda = ebitda_ajustado * multiplo_ebitda
+valor_bruto = valor_ebitda + valor_imovel
+if tem_imovel == "Não":
+    valor_bruto += valor_instalacoes
+valor_liquido = valor_bruto - total_passivos
+
+st.header("4. Benchmark INEP")
+inep_data = {
+    "SP": {"evasao": 0.08, "mensalidade": 950, "ocupacao": 0.82},
+    "RJ": {"evasao": 0.10, "mensalidade": 880, "ocupacao": 0.78},
+    "MG": {"evasao": 0.12, "mensalidade": 720, "ocupacao": 0.75},
+    "RS": {"evasao": 0.09, "mensalidade": 850, "ocupacao": 0.80},
+}
+estado = st.selectbox("Selecione seu estado", list(inep_data.keys()))
+dados_inep = inep_data[estado]
+mensalidade_usuario = receita_total / total_alunos / 12 if total_alunos > 0 else 0
+col_inep1, col_inep2, col_inep3 = st.columns(3)
+col_inep1.metric("Sua Mensalidade", f"R$ {mensalidade_usuario:,.0f}", delta=f"vs R$ {dados_inep['mensalidade']}")
+col_inep2.metric("Sua Ocupação", f"{taxa_ocupacao:.1%}", delta=f"vs {dados_inep['ocupacao']:.1%}")
+col_inep3.metric("EBITDA Ajustado", f"R$ {ebitda_ajustado:,.0f}", delta=f"+R$ {total_ajustes:,.0f}")
+
+st.header("✅ Valor Final")
+st.metric("Valor Líquido", f"R$ {valor_liquido:,.0f}")
+
+if st.button("Gerar Due Diligence Excel"):
+    excel_data = gerar_due_diligence_excel()
+    st.download_button("📥 Baixar Checklist", excel_data, "due_diligence.xlsx")
