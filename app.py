@@ -8,6 +8,24 @@ API_URL = "https://colegiopauliceia.com/school/api.php"
 API_SECRET = os.getenv("API_SECRET", "10XP20to30")
 
 def get_schools():
+    url = f"{API_URL}?secret={API_SECRET}"
+    st.write(f"🔍 URL da API: {url}")
+    st.write(f"🔑 Segredo usado: '{API_SECRET}'")
+    
+    try:
+        response = requests.get(url, timeout=10)
+        st.write(f"📡 Status HTTP: {response.status_code}")
+        st.write(f"📄 Resposta bruta: {response.text[:100]}...")
+        return response.json()
+    except Exception as e:
+        st.error(f"❌ Erro: {str(e)}")
+        return []
+
+
+
+
+
+def get_schools():
     try:
         response = requests.get(f"{API_URL}?secret={API_SECRET}", timeout=10)
         if response.status_code == 200:
@@ -151,3 +169,4 @@ if st.button("Gerar Due Diligence Excel"):
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, sheet_name="Due Diligence", index=False)
     st.download_button("📥 Baixar Checklist", output.getvalue(), "due_diligence.xlsx")
+
