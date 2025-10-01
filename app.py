@@ -1,37 +1,47 @@
 import streamlit as st
+import pandas as pd
+import requests
+import io
+from datetime import datetime
 
-st.title("App Funcionando")
-st.write("Se você vê esta mensagem, o app está OK!")
-if st.button("Salvar Valuation"):
-    # Dados a serem salvos
-    valuation_data = {
-        "name": f"Escola_{int(valor_liquido)}",
-        "estado": "SP",  # Pode ser um input
-        "valor_liquido": valor_liquido,
-        "total_alunos": total_alunos,
-        "receita_total": receita_total,
-        "ebitda_ajustado": ebitda_ajustado,
-        "taxa_ocupacao": taxa_ocupacao,
-        "custos_diretos": custos_diretos,
-        "despesas_admin": despesas_admin,
-        "aluguel_anual": aluguel_anual,
-        "valor_imovel": valor_imovel,
-        "valor_instalacoes": valor_instalacoes,
-        "total_passivos": total_passivos
-    }
-    
-    try:
-        API_URL = "https://colegiopauliceia.com/school/api.php"
-        response = requests.post(
-            f"{API_URL}?secret=10XP20to30",
-            json=valuation_data,
-            timeout=10
-        )
-        if response.status_code == 200:
-    st.success("Valuation salvo com sucesso!")
-            st.experimental_rerun()
+st.set_page_config(page_title="SchoolValuation Pro+ v7", layout="wide")
+st.title("🏫 SchoolValuation Pro+ v7")
+st.markdown("Valuation profissional com salvamento e PDF.")
+
+# ==============================
+# LISTAR ESCOLAS SALVAS
+# ==============================
+st.header("🏫 Escolas Cadastradas")
+try:
+    response = requests.get("https://colegiopauliceia.com/school/api.php?secret=10XP20to30", timeout=5)
+    if response.status_code == 200:
+        schools = response.json()
+        if schools:
+            df = pd.DataFrame(schools)
+            st.dataframe(df[['name', 'estado', 'valor_liquido']].rename(columns={
+                'name': 'Nome', 'estado': 'Estado', 'valor_liquido': 'Valor Líquido'
+            }).style.format({'Valor Líquido': 'R$ {:,.0f}'}))
         else:
-            st.error(f"❌ Erro ao salvar: {response.text}")
-    except Exception as e:
-        st.error(f"❌ Erro de conexão: {str(e)}")
+            st.info("Nenhuma escola cadastrada.")
+    else:
+        st.warning("Não foi possível carregar escolas.")
+except:
+    st.info("Lista temporariamente indisponível.")
 
+# ==============================
+# VALUATION
+# ==============================
+st.header("1. Dados Operacionais")
+col1, col2 = st.columns(2)
+with col1:
+    alunos_ei = st.number_input("Alunos - EI", min_value=0, value=100)
+    capacidade_ei = st.number_input("Capacidade (EI)", min_value=1, value=120)
+    alunos_ef1 = st.number_input("Alunos - EF1", min_value=0, value=120)
+    capacidade_ef1 = st.number_input("Capacidade (EF1)", min_value=1, value=140)
+    alunos_ef2 = st.number_input("Alunos - EF2", min_value=0, value=100)
+    capacidade_ef2 = st.number_input("Capacidade (EF2)", min_value=1, value=120)
+    alunos_em = st.number_input("Alunos - EM", min_value=0, value=80)
+    capacidade_em = st.number_input("Capacidade (EM)", min_value=1, value=100)
+
+with col2:
+    mensalidade_ei = st.number_input("Mensalidade (EI)", min_value=0.0, value=600.0
