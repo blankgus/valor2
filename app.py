@@ -1,39 +1,14 @@
 import streamlit as st
 import pandas as pd
-import requests
+import io
 
 st.set_page_config(page_title="SchoolValuation Pro+ v8", layout="wide")
 st.title("🏫 SchoolValuation Pro+ v8")
 
-# ==============================
-# LINKS IMPORTANTES
-# ==============================
-st.markdown("🔗 **[Cadastrar Nova Escola](https://api.colegiopauliceia.com/cadastro.html)**")
-st.markdown("🔗 **[Ver Escolas Cadastradas](https://api.colegiopauliceia.com/cadastro.html)**")
+# Link para cadastro (domínio principal)
+st.markdown("🔗 **[Cadastrar Nova Escola](https://colegiopauliceia.com/school/cadastro.html)**")
 
-# ==============================
-# LISTAR ESCOLAS SALVAS
-# ==============================
-st.header("🏫 Escolas Cadastradas")
-try:
-    response = requests.get("https://api.colegiopauliceia.com/api.php?secret=10XP20to30", timeout=5)
-    if response.status_code == 200:
-        schools = response.json()
-        if schools:
-            df = pd.DataFrame(schools)
-            st.dataframe(df[['name', 'estado', 'valor_liquido']].rename(columns={
-                'name': 'Nome', 'estado': 'Estado', 'valor_liquido': 'Valor Líquido'
-            }).style.format({'Valor Líquido': 'R$ {:,.0f}'}))
-        else:
-            st.info("Nenhuma escola cadastrada ainda.")
-    else:
-        st.warning(f"Erro ao carregar escolas: {response.status_code}")
-except Exception as e:
-    st.info("Lista de escolas temporariamente indisponível.")
-
-# ==============================
-# VALUATION (sem dependência de API)
-# ==============================
+# Valuation (100% offline)
 st.header("1. Dados Operacionais")
 col1, col2 = st.columns(2)
 with col1:
@@ -121,7 +96,6 @@ st.caption(f"Ocupação: {taxa_ocupacao:.1%} ({total_alunos}/{capacidade_total} 
 
 # Due diligence
 if st.button("Gerar Due Diligence Excel"):
-    import io
     checklist = [
         ["Financeiro", "Balanço auditado (3 anos)", "", ""],
         ["Financeiro", "Demonstração de fluxo de caixa", "", ""],
