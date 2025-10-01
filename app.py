@@ -1,55 +1,18 @@
 import streamlit as st
 import pandas as pd
-import requests
-import os
+import io
 
-# Configuração da API
-API_URL = "https://colegiopauliceia.com/school/api.php"
-API_SECRET = os.getenv("API_SECRET", "10XP20to30")
-
-def get_schools():
-    try:
-        response = requests.get(f"{API_URL}?secret={API_SECRET}", timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            st.error(f"❌ Status HTTP {response.status_code}")
-            return []
-    except Exception as e:
-        st.error(f"❌ Erro de conexão: {str(e)}")
-        return []
-
-# --- APP PRINCIPAL ---
 st.set_page_config(page_title="SchoolValuation Pro+ v6", layout="wide")
 st.title("🏫 SchoolValuation Pro+ v6")
+st.markdown("Valuation profissional para escolas particulares.")
 
-# Link para cadastro
+# Link para cadastro (página separada)
 st.markdown(
     "🔗 **Gerenciar escolas cadastradas**: "
     "[Clique aqui](https://colegiopauliceia.com/school/cadastro.html)"
 )
 
-# Diagnóstico da API
-st.subheader("🔍 Diagnóstico da API")
-st.write(f"URL da API: {API_URL}?secret={API_SECRET}")
-st.write(f"Segredo usado: '{API_SECRET}'")
-
-try:
-    response = requests.get(f"{API_URL}?secret={API_SECRET}", timeout=10)
-    st.write(f"Status HTTP: {response.status_code}")
-    st.write(f"Resposta bruta: {response.text[:200]}...")
-    
-    if response.status_code == 200:
-        schools = response.json()
-        st.success("✅ API retornou dados!")
-        st.dataframe(pd.DataFrame(schools))
-    else:
-        st.error("❌ Erro na API")
-        
-except Exception as e:
-    st.error(f"❌ Erro ao testar API: {str(e)}")
-
-# Valuation (sem dependência de API)
+# Valuation (100% offline)
 st.header("1. Dados Operacionais")
 col1, col2 = st.columns(2)
 with col1:
@@ -132,7 +95,6 @@ st.metric("Valor Líquido", f"R$ {valor_liquido:,.0f}")
 
 # Due diligence
 if st.button("Gerar Due Diligence Excel"):
-    import io
     checklist = [
         ["Financeiro", "Balanço auditado (3 anos)", "", ""],
         ["Financeiro", "Demonstração de fluxo de caixa", "", ""],
