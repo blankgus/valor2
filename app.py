@@ -1,24 +1,32 @@
-import streamlit as st
-import pandas as pd
-
-st.title("🏫 SchoolValuation Pro+ v7")
-st.success("✅ App carregado com sucesso!")
-
-# Simular lista de escolas
-st.header("🏫 Escolas Cadastradas")
-schools = [
-    {"Nome": "Escola A", "Estado": "SP", "Valor": 1500000},
-    {"Nome": "Escola B", "Estado": "RJ", "Valor": 950000}
-]
-df = pd.DataFrame(schools)
-st.dataframe(df.style.format({"Valor": "R$ {:,.0f}"}))
-
-# Valuation
-st.header("✅ Valor Final")
-valor = st.number_input("Valor Líquido (R$)", value=1000000)
-st.metric("Valor Líquido", f"R$ {valor:,.0f}")
-
-# Gráfico
-st.subheader("📊 Gráfico de Ocupação")
-st.progress(85)
-st.caption("Ocupação: 85%")
+if st.button("💾 Salvar Valuation"):
+    # Dados a serem salvos
+    valuation_data = {
+        "name": f"Escola_{int(valor_liquido)}",
+        "estado": "SP",  # Pode ser um input
+        "valor_liquido": valor_liquido,
+        "total_alunos": total_alunos,
+        "receita_total": receita_total,
+        "ebitda_ajustado": ebitda_ajustado,
+        "taxa_ocupacao": taxa_ocupacao,
+        "custos_diretos": custos_diretos,
+        "despesas_admin": despesas_admin,
+        "aluguel_anual": aluguel_anual,
+        "valor_imovel": valor_imovel,
+        "valor_instalacoes": valor_instalacoes,
+        "total_passivos": total_passivos
+    }
+    
+    try:
+        API_URL = "https://colegiopauliceia.com/school/api.php"
+        response = requests.post(
+            f"{API_URL}?secret=10XP20to30",
+            json=valuation_data,
+            timeout=10
+        )
+        if response.status_code == 200:
+            st.success("✅ Valuation salvo com sucesso!")
+            st.experimental_rerun()
+        else:
+            st.error(f"❌ Erro ao salvar: {response.text}")
+    except Exception as e:
+        st.error(f"❌ Erro de conexão: {str(e)}")
