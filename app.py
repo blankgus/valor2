@@ -22,32 +22,6 @@ def get_schools():
         return []
 
 
-
-
-
-def get_schools():
-    try:
-        response = requests.get(f"{API_URL}?secret={API_SECRET}", timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            st.error(f"Erro HTTP {response.status_code}")
-            return []
-    except Exception as e:
-        st.error(f"Erro de conexão: {str(e)}")
-        return []
-
-def save_school(name, estado, valor):
-    try:
-        response = requests.post(
-            f"{API_URL}?secret={API_SECRET}",
-            json={"name": name, "estado": estado, "valor_liquido": valor},
-            timeout=10
-        )
-        return response.json()
-    except Exception as e:
-        return {"error": str(e)}
-
 # --- APP PRINCIPAL ---
 st.set_page_config(page_title="SchoolValuation Pro+ v6", layout="wide")
 st.title("🏫 SchoolValuation Pro+ v6")
@@ -169,4 +143,5 @@ if st.button("Gerar Due Diligence Excel"):
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, sheet_name="Due Diligence", index=False)
     st.download_button("📥 Baixar Checklist", output.getvalue(), "due_diligence.xlsx")
+
 
