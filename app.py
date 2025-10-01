@@ -1,4 +1,4 @@
-if st.button("💾 Salvar Valuation"):
+if st.button("Salvar Valuation"):
     # Dados a serem salvos
     valuation_data = {
         "name": f"Escola_{int(valor_liquido)}",
@@ -30,3 +30,4 @@ if st.button("💾 Salvar Valuation"):
             st.error(f"❌ Erro ao salvar: {response.text}")
     except Exception as e:
         st.error(f"❌ Erro de conexão: {str(e)}")
+
