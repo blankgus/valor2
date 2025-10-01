@@ -1,18 +1,55 @@
 import streamlit as st
 import pandas as pd
+import requests
+import os
 
+# Configuração da API (agora aponta para /school/)
+API_URL = "https://colegiopauliceia.com/school/api.php"
+API_SECRET = os.getenv("API_SECRET", "10XP20to30")
+
+def get_schools():
+    try:
+        response = requests.get(f"{API_URL}?secret={API_SECRET}", timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"Erro HTTP {response.status_code}")
+            return []
+    except Exception as e:
+        st.error(f"Erro de conexão: {str(e)}")
+        return []
+
+def save_school(name, estado, valor):
+    try:
+        response = requests.post(
+            f"{API_URL}?secret={API_SECRET}",
+            json={"name": name, "estado": estado, "valor_liquido": valor},
+            timeout=10
+        )
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+# --- APP PRINCIPAL ---
 st.set_page_config(page_title="SchoolValuation Pro+ v6", layout="wide")
 st.title("🏫 SchoolValuation Pro+ v6")
-st.markdown("Valuation profissional para escolas particulares.")
 
-# --- LINK PARA CADASTRO ---
-st.header("🔗 Cadastro de Escolas")
+# Link para cadastro
 st.markdown(
-    "Para cadastrar sua escola e gerenciar documentos, acesse nosso sistema seguro: "
-    "[👉 Cadastrar Escola](https://colegiopauliceia.com/cadastro.html)"
+    "🔗 **Gerenciar escolas cadastradas**: "
+    "[Clique aqui](https://colegiopauliceia.com/school/cadastro.html)"
 )
 
-# --- VALUATION (sem API) ---
+# Listar escolas
+schools = get_schools()
+if schools:
+    st.subheader("Escolas Cadastradas")
+    df = pd.DataFrame(schools)
+    st.dataframe(df[['name', 'estado', 'valor_liquido']].rename(columns={
+        'name': 'Nome', 'estado': 'Estado', 'valor_liquido': 'Valor Líquido'
+    }).style.format({'Valor Líquido': 'R$ {:,.0f}'}))
+
+# Valuation (sem dependência de API)
 st.header("1. Dados Operacionais")
 col1, col2 = st.columns(2)
 with col1:
@@ -57,7 +94,7 @@ with col4:
 
 multiplo_ebitda = st.slider("Múltiplo de EBITDA", 2.0, 10.0, 6.0, step=0.5)
 
-# --- CÁLCULOS ---
+# Cálculos
 receita_ei = alunos_ei * mensalidade_ei * 12
 receita_ef1 = alunos_ef1 * mensalidade_ef1 * 12
 receita_ef2 = alunos_ef2 * mensalidade_ef2 * 12
@@ -83,7 +120,7 @@ receitas_nao_rec = col_adj4.number_input("Receitas não recorrentes", value=0.0)
 
 ebitda_ajustado = ebitda_contabil + desp_nao_rec + pro_labore_exc + multas - receitas_nao_rec
 
-# --- VALUATION ---
+# Valuation
 valor_ebitda = ebitda_ajustado * multiplo_ebitda
 valor_bruto = valor_ebitda + valor_imovel
 if tem_imovel == "Não":
@@ -93,10 +130,9 @@ valor_liquido = valor_bruto - total_passivos
 st.header("✅ Valor Final")
 st.metric("Valor Líquido", f"R$ {valor_liquido:,.0f}")
 
+# Due diligence
 if st.button("Gerar Due Diligence Excel"):
     import io
-    from openpyxl import Workbook
-    
     checklist = [
         ["Financeiro", "Balanço auditado (3 anos)", "", ""],
         ["Financeiro", "Demonstração de fluxo de caixa", "", ""],
@@ -110,10 +146,8 @@ if st.button("Gerar Due Diligence Excel"):
         ["Pedagógico", "Certificações internacionais", "", ""],
         ["Pedagógico", "Currículo Lattes dos coordenadores", "", ""],
     ]
-    
+    df = pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "Observações"])
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "Observações"]).to_excel(writer, sheet_name="Due Diligence", index=False)
-    
+        df.to_excel(writer, sheet_name="Due Diligence", index=False)
     st.download_button("📥 Baixar Checklist", output.getvalue(), "due_diligence.xlsx")
-
