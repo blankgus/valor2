@@ -4,9 +4,14 @@ import requests
 import io
 from datetime import datetime
 
-st.set_page_config(page_title="SchoolValuation Pro+ v7", layout="wide")
-st.title("🏫 SchoolValuation Pro+ v7")
-st.markdown("Valuation profissional com salvamento e PDF.")
+st.set_page_config(page_title="SchoolValuation Pro+ v8", layout="wide")
+st.title("🏫 SchoolValuation Pro+ v8")
+
+# ==============================
+# LINKS IMPORTANTES
+# ==============================
+st.markdown("🔗 **[Cadastrar Nova Escola](https://colegiopauliceia.com/school/cadastro.html)**")
+st.markdown("🔗 **[Ver Escolas Cadastradas](https://colegiopauliceia.com/school/cadastro.html)**")
 
 # ==============================
 # LISTAR ESCOLAS SALVAS
@@ -18,18 +23,24 @@ try:
         schools = response.json()
         if schools:
             df = pd.DataFrame(schools)
-            st.dataframe(df[['name', 'estado', 'valor_liquido']].rename(columns={
-                'name': 'Nome', 'estado': 'Estado', 'valor_liquido': 'Valor Líquido'
-            }).style.format({'Valor Líquido': 'R$ {:,.0f}'}))
+            # Garantir que as colunas existam
+            cols_to_show = ['name', 'estado', 'valor_liquido']
+            cols_available = [col for col in cols_to_show if col in df.columns]
+            if cols_available:
+                st.dataframe(df[cols_available].rename(columns={
+                    'name': 'Nome', 'estado': 'Estado', 'valor_liquido': 'Valor Líquido'
+                }).style.format({'Valor Líquido': 'R$ {:,.0f}'}))
+            else:
+                st.info("Nenhuma escola com dados completos.")
         else:
-            st.info("Nenhuma escola cadastrada.")
+            st.info("Nenhuma escola cadastrada ainda.")
     else:
-        st.warning("Não foi possível carregar escolas.")
-except:
-    st.info("Lista temporariamente indisponível.")
+        st.warning(f"Erro ao carregar escolas: {response.status_code}")
+except Exception as e:
+    st.info("⚠️ Lista de escolas indisponível no momento.")
 
 # ==============================
-# VALUATION
+# VALUATION (sem salvamento automático)
 # ==============================
 st.header("1. Dados Operacionais")
 col1, col2 = st.columns(2)
@@ -103,40 +114,7 @@ if tem_imovel == "Não":
 valor_liquido = valor_bruto - total_passivos
 
 # ==============================
-# BOTÃO PARA SALVAR
-# ==============================
-if st.button("💾 Salvar Escola"):
-    school_data = {
-        "name": f"Escola_{datetime.now().strftime('%Y%m%d_%H%M')}",
-        "estado": "SP",
-        "valor_liquido": valor_liquido,
-        "total_alunos": total_alunos,
-        "receita_total": receita_total,
-        "ebitda_ajustado": ebitda_ajustado,
-        "taxa_ocupacao": taxa_ocupacao,
-        "custos_diretos": custos_diretos,
-        "despesas_admin": despesas_admin,
-        "aluguel_anual": aluguel_anual,
-        "valor_imovel": valor_imovel,
-        "valor_instalacoes": valor_instalacoes,
-        "total_passivos": total_passivos
-    }
-    try:
-        response = requests.post(
-            "https://colegiopauliceia.com/school/api.php?secret=10XP20to30",
-            json=school_data,
-            timeout=10
-        )
-        if response.status_code == 200:
-            st.success("✅ Escola salva com sucesso!")
-            st.experimental_rerun()
-        else:
-            st.error("❌ Erro ao salvar escola")
-    except:
-        st.error("❌ Falha na conexão com o servidor")
-
-# ==============================
-# RESULTADO FINAL
+# RESULTADO FINAL COM GRÁFICOS
 # ==============================
 st.header("✅ Valor Final")
 st.metric("Valor Líquido", f"R$ {valor_liquido:,.0f}")
@@ -145,31 +123,5 @@ st.subheader("📊 Gráfico de Ocupação")
 st.progress(int(taxa_ocupacao * 100))
 st.caption(f"Ocupação: {taxa_ocupacao:.1%} ({total_alunos}/{capacidade_total} alunos)")
 
-# ==============================
-# GERAR PDF
-# ==============================
-if st.button("📄 Gerar Relatório em PDF"):
-    from fpdf import FPDF
-    
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, "Relatório de Valuation", ln=True, align="C")
-    pdf.ln(10)
-    
-    pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, f"Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
-    pdf.cell(0, 10, f"Valor Líquido: R$ {valor_liquido:,.2f}", ln=True)
-    pdf.cell(0, 10, f"EBITDA Ajustado: R$ {ebitda_ajustado:,.2f}", ln=True)
-    pdf.cell(0, 10, f"Taxa de Ocupação: {taxa_ocupacao:.1%}", ln=True)
-    pdf.cell(0, 10, f"Total de Alunos: {total_alunos}", ln=True)
-    pdf.cell(0, 10, f"Receita Anual: R$ {receita_total:,.2f}", ln=True)
-    
-    # Output
-    pdf_output = pdf.output(dest="S").encode("latin-1")
-    st.download_button(
-        "📥 Baixar PDF",
-        pdf_output,
-        "relatorio_valuation.pdf",
-        "application/pdf"
-    )
+# Gráfico de custos (opcional)
+st
