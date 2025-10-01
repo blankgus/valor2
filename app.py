@@ -5,39 +5,19 @@ import os
 
 # Configuração da API
 API_URL = "https://colegiopauliceia.com/school/api.php"
-API_SECRET = os.getenv("API_SECRET", "10XP20to30")  # Fallback para teste
+API_SECRET = os.getenv("API_SECRET", "10XP20to30")
 
 def get_schools():
     try:
         response = requests.get(f"{API_URL}?secret={API_SECRET}", timeout=10)
-        
-        # Verificar se a resposta é JSON
         if response.status_code == 200:
-            try:
-                return response.json()
-            except ValueError:
-                st.error("❌ Resposta não é JSON")
-                st.code(f"Resposta bruta: {response.text[:500]}")
-                return []
+            return response.json()
         else:
             st.error(f"❌ Status HTTP {response.status_code}")
-            st.code(f"Resposta: {response.text[:500]}")
             return []
-            
     except Exception as e:
         st.error(f"❌ Erro de conexão: {str(e)}")
         return []
-
-def save_school(name, estado, valor):
-    try:
-        response = requests.post(
-            f"{API_URL}?secret={API_SECRET}",
-            json={"name": name, "estado": estado, "valor_liquido": valor},
-            timeout=10
-        )
-        return response.json()
-    except Exception as e:
-        return {"error": str(e)}
 
 # --- APP PRINCIPAL ---
 st.set_page_config(page_title="SchoolValuation Pro+ v6", layout="wide")
@@ -49,7 +29,7 @@ st.markdown(
     "[Clique aqui](https://colegiopauliceia.com/school/cadastro.html)"
 )
 
-# Teste de conexão
+# Diagnóstico da API
 st.subheader("🔍 Diagnóstico da API")
 st.write(f"URL da API: {API_URL}?secret={API_SECRET}")
 st.write(f"Segredo usado: '{API_SECRET}'")
