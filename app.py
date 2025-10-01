@@ -3,24 +3,41 @@ import pandas as pd
 import requests
 import os
 
-# Configuração da API (agora aponta para /school/)
+# Configuração da API
 API_URL = "https://colegiopauliceia.com/school/api.php"
-API_SECRET = os.getenv("API_SECRET", "10XP20to30")
+API_SECRET = os.getenv("API_SECRET", "10XP20to30")  # Fallback para teste
 
 def get_schools():
-    url = f"{API_URL}?secret={API_SECRET}"
-    st.write(f"🔍 URL da API: {url}")
-    st.write(f"🔑 Segredo usado: '{API_SECRET}'")
-    
     try:
-        response = requests.get(url, timeout=10)
-        st.write(f"📡 Status HTTP: {response.status_code}")
-        st.write(f"📄 Resposta bruta: {response.text[:100]}...")
-        return response.json()
+        response = requests.get(f"{API_URL}?secret={API_SECRET}", timeout=10)
+        
+        # Verificar se a resposta é JSON
+        if response.status_code == 200:
+            try:
+                return response.json()
+            except ValueError:
+                st.error("❌ Resposta não é JSON")
+                st.code(f"Resposta bruta: {response.text[:500]}")
+                return []
+        else:
+            st.error(f"❌ Status HTTP {response.status_code}")
+            st.code(f"Resposta: {response.text[:500]}")
+            return []
+            
     except Exception as e:
-        st.error(f"❌ Erro: {str(e)}")
+        st.error(f"❌ Erro de conexão: {str(e)}")
         return []
 
+def save_school(name, estado, valor):
+    try:
+        response = requests.post(
+            f"{API_URL}?secret={API_SECRET}",
+            json={"name": name, "estado": estado, "valor_liquido": valor},
+            timeout=10
+        )
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
 # --- APP PRINCIPAL ---
 st.set_page_config(page_title="SchoolValuation Pro+ v6", layout="wide")
@@ -32,14 +49,25 @@ st.markdown(
     "[Clique aqui](https://colegiopauliceia.com/school/cadastro.html)"
 )
 
-# Listar escolas
-schools = get_schools()
-if schools:
-    st.subheader("Escolas Cadastradas")
-    df = pd.DataFrame(schools)
-    st.dataframe(df[['name', 'estado', 'valor_liquido']].rename(columns={
-        'name': 'Nome', 'estado': 'Estado', 'valor_liquido': 'Valor Líquido'
-    }).style.format({'Valor Líquido': 'R$ {:,.0f}'}))
+# Teste de conexão
+st.subheader("🔍 Diagnóstico da API")
+st.write(f"URL da API: {API_URL}?secret={API_SECRET}")
+st.write(f"Segredo usado: '{API_SECRET}'")
+
+try:
+    response = requests.get(f"{API_URL}?secret={API_SECRET}", timeout=10)
+    st.write(f"Status HTTP: {response.status_code}")
+    st.write(f"Resposta bruta: {response.text[:200]}...")
+    
+    if response.status_code == 200:
+        schools = response.json()
+        st.success("✅ API retornou dados!")
+        st.dataframe(pd.DataFrame(schools))
+    else:
+        st.error("❌ Erro na API")
+        
+except Exception as e:
+    st.error(f"❌ Erro ao testar API: {str(e)}")
 
 # Valuation (sem dependência de API)
 st.header("1. Dados Operacionais")
@@ -143,5 +171,3 @@ if st.button("Gerar Due Diligence Excel"):
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, sheet_name="Due Diligence", index=False)
     st.download_button("📥 Baixar Checklist", output.getvalue(), "due_diligence.xlsx")
-
-
