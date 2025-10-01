@@ -9,7 +9,7 @@ st.markdown("Valuation profissional para escolas particulares.")
 st.header("🔗 Cadastro de Escolas")
 st.markdown(
     "Para cadastrar sua escola e gerenciar documentos, acesse nosso sistema seguro: "
-    "[👉 Cadastrar Escola](https://api.colegiopauliceia.com/cadastro.html)"
+    "[👉 Cadastrar Escola](https://colegiopauliceia.com/cadastro.html)"
 )
 
 # --- VALUATION (sem API) ---
@@ -116,3 +116,4 @@ if st.button("Gerar Due Diligence Excel"):
         pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "Observações"]).to_excel(writer, sheet_name="Due Diligence", index=False)
     
     st.download_button("📥 Baixar Checklist", output.getvalue(), "due_diligence.xlsx")
+
