@@ -1,18 +1,74 @@
 import streamlit as st
 import pandas as pd
+import requests
 import io
 
-st.set_page_config(page_title="SchoolValuation Pro+ v6", layout="wide")
-st.title("🏫 SchoolValuation Pro+ v6")
-st.markdown("Valuation profissional para escolas particulares.")
+st.set_page_config(page_title="SchoolValuation Pro+ v7", layout="wide")
+st.title("🏫 SchoolValuation Pro+ v7")
+st.markdown("Valuation profissional com salvamento automático e visualização de dados.")
 
-# Link para cadastro (página separada)
-st.markdown(
-    "🔗 **Gerenciar escolas cadastradas**: "
-    "[Clique aqui](https://colegiopauliceia.com/school/cadastro.html)"
-)
+# ==============================
+# FUNÇÃO PARA SALVAR VALUATION COMPLETO
+# ==============================
+def save_full_valuation(valuation_data):
+    """Salva valuation completo na API"""
+    try:
+        API_URL = "https://colegiopauliceia.com/school/api.php"
+        response = requests.post(
+            f"{API_URL}?secret=10XP20to30",
+            json=valuation_data,
+            timeout=10
+        )
+        return response.json() if response.status_code == 200 else {"error": "Falha ao salvar"}
+    except Exception as e:
+        return {"error": str(e)}
 
-# Valuation (100% offline)
+# ==============================
+# LISTAR ESCOLAS SALVAS
+# ==============================
+st.header("🏫 Escolas Cadastradas")
+try:
+    API_URL = "https://colegiopauliceia.com/school/api.php"
+    response = requests.get(f"{API_URL}?secret=10XP20to30", timeout=5)
+    if response.status_code == 200:
+        schools = response.json()
+        if schools:
+            df = pd.DataFrame(schools)
+            # Mostrar apenas colunas principais
+            display_df = df[['name', 'estado', 'valor_liquido']].rename(columns={
+                'name': 'Nome', 'estado': 'Estado', 'valor_liquido': 'Valor Líquido'
+            })
+            st.dataframe(display_df.style.format({'Valor Líquido': 'R$ {:,.0f}'}))
+            
+            # Selecionar escola para ver detalhes
+            selected = st.selectbox("Ver detalhes de:", df['name'].tolist())
+            if selected:
+                school = df[df['name'] == selected].iloc[0].to_dict()
+                st.subheader(f"📊 Detalhes de: {selected}")
+                
+                # Resumo numérico
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Valor Líquido", f"R$ {school.get('valor_liquido', 0):,.0f}")
+                col2.metric("Estado", school.get('estado', 'N/A'))
+                col3.metric("Alunos", school.get('total_alunos', 'N/A'))
+                
+                # Gráficos (se houver dados)
+                if 'receita_total' in school:
+                    st.subheader("📈 Gráfico de Receita")
+                    st.bar_chart({
+                        "Receita": [school['receita_total']],
+                        "EBITDA": [school.get('ebitda_ajustado', 0)]
+                    })
+        else:
+            st.info("Nenhuma escola cadastrada ainda.")
+    else:
+        st.warning("Não foi possível carregar a lista de escolas.")
+except Exception as e:
+    st.info("Lista de escolas temporariamente indisponível.")
+
+# ==============================
+# FORMULÁRIO DE VALUATION
+# ==============================
 st.header("1. Dados Operacionais")
 col1, col2 = st.columns(2)
 with col1:
@@ -90,8 +146,40 @@ if tem_imovel == "Não":
     valor_bruto += valor_instalacoes
 valor_liquido = valor_bruto - total_passivos
 
+# ==============================
+# BOTÃO PARA SALVAR TUDO
+# ==============================
+if st.button("💾 Salvar Valuation Completo"):
+    valuation_data = {
+        "name": f"Escola_{int(valor_liquido)}",
+        "estado": "SP",  # Pode ser um input
+        "valor_liquido": valor_liquido,
+        "total_alunos": total_alunos,
+        "receita_total": receita_total,
+        "ebitda_ajustado": ebitda_ajustado,
+        "taxa_ocupacao": taxa_ocupacao,
+        "custos_diretos": custos_diretos,
+        "despesas_admin": despesas_admin,
+        "aluguel_anual": aluguel_anual,
+        "valor_imovel": valor_imovel,
+        "valor_instalacoes": valor_instalacoes,
+        "total_passivos": total_passivos
+    }
+    
+    result = save_full_valuation(valuation_data)
+    if "error" not in result:
+        st.success("✅ Valuation salvo com sucesso!")
+        st.experimental_rerun()
+    else:
+        st.error(f"❌ Erro ao salvar: {result['error']}")
+
 st.header("✅ Valor Final")
 st.metric("Valor Líquido", f"R$ {valor_liquido:,.0f}")
+
+# Gráfico de ocupação
+st.subheader("📊 Gráfico de Ocupação")
+st.progress(int(taxa_ocupacao * 100))
+st.caption(f"Ocupação: {taxa_ocupacao:.1%} ({total_alunos}/{capacidade_total} alunos)")
 
 # Due diligence
 if st.button("Gerar Due Diligence Excel"):
