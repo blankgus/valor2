@@ -27,9 +27,11 @@ if st.button("Salvar Valuation"):
             json=valuation_data,
             timeout=10
         )
-        if response.Valuation salvo com sucesso!")
+        if response.status_code == 200:
+    st.success("Valuation salvo com sucesso!")
             st.experimental_rerun()
         else:
             st.error(f"❌ Erro ao salvar: {response.text}")
     except Exception as e:
         st.error(f"❌ Erro de conexão: {str(e)}")
+
