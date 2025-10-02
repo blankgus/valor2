@@ -1,14 +1,56 @@
 import streamlit as st
 import pandas as pd
+import requests
 import io
+from datetime import datetime
 
-st.set_page_config(page_title="SchoolValuation Pro+ v8", layout="wide")
-st.title("🏫 SchoolValuation Pro+ v8")
+st.set_page_config(page_title="SchoolValuation Pro+ v9", layout="wide")
+st.title("🏫 SchoolValuation Pro+ v9")
 
-# Link para cadastro (domínio principal)
+# ==============================
+# LINKS IMPORTANTES
+# ==============================
 st.markdown("🔗 **[Cadastrar Nova Escola](https://colegiopauliceia.com/school/cadastro.html)**")
+st.markdown("🔗 **[Ver Escolas Cadastradas](https://colegiopauliceia.com/school/cadastro.html)**")
 
-# Valuation (100% offline)
+# ==============================
+# LISTAR ESCOLAS COM DETALHES
+# ==============================
+st.header("🏫 Escolas Cadastradas")
+try:
+    response = requests.get("https://colegiopauliceia.com/school/api.php?secret=10XP20to30", timeout=5)
+    if response.status_code == 200:
+        schools = response.json()
+        if schools:
+            df = pd.DataFrame(schools)
+            # Mostrar colunas disponíveis
+            cols = ['name', 'estado', 'valor_liquido', 'total_alunos', 'receita_total', 'ebitda_ajustado']
+            cols = [c for c in cols if c in df.columns]
+            if cols:
+                st.dataframe(df[cols].rename(columns={
+                    'name': 'Nome',
+                    'estado': 'Estado',
+                    'valor_liquido': 'Valor Líquido',
+                    'total_alunos': 'Alunos',
+                    'receita_total': 'Receita Anual',
+                    'ebitda_ajustado': 'EBITDA'
+                }).style.format({
+                    'Valor Líquido': 'R$ {:,.0f}',
+                    'Receita Anual': 'R$ {:,.0f}',
+                    'EBITDA': 'R$ {:,.0f}'
+                }))
+            else:
+                st.info("Escolas cadastradas, mas sem dados detalhados.")
+        else:
+            st.info("Nenhuma escola cadastrada ainda.")
+    else:
+        st.warning("Não foi possível carregar a lista de escolas.")
+except Exception as e:
+    st.info("Lista de escolas temporariamente indisponível.")
+
+# ==============================
+# VALUATION COMPLETO
+# ==============================
 st.header("1. Dados Operacionais")
 col1, col2 = st.columns(2)
 with col1:
@@ -79,23 +121,101 @@ receitas_nao_rec = col_adj4.number_input("Receitas não recorrentes", value=0.0)
 
 ebitda_ajustado = ebitda_contabil + desp_nao_rec + pro_labore_exc + multas - receitas_nao_rec
 
-# Valuation
 valor_ebitda = ebitda_ajustado * multiplo_ebitda
 valor_bruto = valor_ebitda + valor_imovel
 if tem_imovel == "Não":
     valor_bruto += valor_instalacoes
 valor_liquido = valor_bruto - total_passivos
 
+# ==============================
+# BOTÃO PARA SALVAR COMPLETO
+# ==============================
+if st.button("💾 Salvar Valuation Completo"):
+    school_data = {
+        "name": f"Escola_{datetime.now().strftime('%Y%m%d_%H%M')}",
+        "estado": "SP",
+        "valor_liquido": valor_liquido,
+        "total_alunos": total_alunos,
+        "receita_total": receita_total,
+        "ebitda_ajustado": ebitda_ajustado,
+        "taxa_ocupacao": taxa_ocupacao,
+        "custos_diretos": custos_diretos,
+        "despesas_admin": despesas_admin,
+        "aluguel_anual": aluguel_anual,
+        "valor_imovel": valor_imovel,
+        "valor_instalacoes": valor_instalacoes,
+        "total_passivos": total_passivos
+    }
+    try:
+        response = requests.post(
+            "https://colegiopauliceia.com/school/api.php?secret=10XP20to30",
+            json=school_data,
+            timeout=10
+        )
+        if response.status_code == 200:
+            st.success("✅ Valuation salvo com sucesso!")
+            st.experimental_rerun()
+        else:
+            st.error("❌ Erro ao salvar escola")
+    except Exception as e:
+        st.error(f"❌ Falha na conexão: {str(e)}")
+
+# ==============================
+# RESULTADO FINAL COM GRÁFICOS
+# ==============================
 st.header("✅ Valor Final")
 st.metric("Valor Líquido", f"R$ {valor_liquido:,.0f}")
 
-# Gráfico de ocupação
 st.subheader("📊 Gráfico de Ocupação")
 st.progress(int(taxa_ocupacao * 100))
 st.caption(f"Ocupação: {taxa_ocupacao:.1%} ({total_alunos}/{capacidade_total} alunos)")
 
-# Due diligence
-if st.button("Gerar Due Diligence Excel"):
+st.subheader("📈 Distribuição de Receita")
+receita_data = {
+    "EI": receita_ei,
+    "EF1": receita_ef1,
+    "EF2": receita_ef2,
+    "EM": receita_em
+}
+st.bar_chart(receita_data)
+
+# ==============================
+# EXPORTAR EM EXCEL COMPLETO
+# ==============================
+if st.button("📥 Exportar Relatório Completo em Excel"):
+    # Dados principais
+    dados_principais = {
+        "Item": [
+            "Valor Líquido",
+            "EBITDA Ajustado",
+            "Receita Total",
+            "Total de Alunos",
+            "Taxa de Ocupação",
+            "Custos Diretos",
+            "Despesas Administrativas",
+            "Aluguel Anual",
+            "Valor do Imóvel",
+            "Valor das Instalações",
+            "Dívidas Totais"
+        ],
+        "Valor": [
+            f"R$ {valor_liquido:,.2f}",
+            f"R$ {ebitda_ajustado:,.2f}",
+            f"R$ {receita_total:,.2f}",
+            total_alunos,
+            f"{taxa_ocupacao:.1%}",
+            f"R$ {custos_diretos:,.2f}",
+            f"R$ {despesas_admin:,.2f}",
+            f"R$ {aluguel_anual:,.2f}",
+            f"R$ {valor_imovel:,.2f}",
+            f"R$ {valor_instalacoes:,.2f}",
+            f"R$ {total_passivos:,.2f}"
+        ]
+    }
+    
+    df_principal = pd.DataFrame(dados_principais)
+    
+    # Due diligence
     checklist = [
         ["Financeiro", "Balanço auditado (3 anos)", "", ""],
         ["Financeiro", "Demonstração de fluxo de caixa", "", ""],
@@ -109,8 +229,17 @@ if st.button("Gerar Due Diligence Excel"):
         ["Pedagógico", "Certificações internacionais", "", ""],
         ["Pedagógico", "Currículo Lattes dos coordenadores", "", ""],
     ]
-    df = pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "Observações"])
+    df_checklist = pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "Observações"])
+    
+    # Exportar
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, sheet_name="Due Diligence", index=False)
-    st.download_button("📥 Baixar Checklist", output.getvalue(), "due_diligence.xlsx")
+        df_principal.to_excel(writer, sheet_name="Resumo Financeiro", index=False)
+        df_checklist.to_excel(writer, sheet_name="Due Diligence", index=False)
+    
+    st.download_button(
+        "📥 Baixar Relatório Completo",
+        output.getvalue(),
+        "relatorio_valuation_completo.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
