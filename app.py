@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import requests
 import io
 from datetime import datetime
 
@@ -12,41 +11,6 @@ st.title("🏫 SchoolValuation Pro+ v9")
 # ==============================
 st.markdown("🔗 **[Cadastrar Nova Escola](https://colegiopauliceia.com/school/cadastro.html)**")
 st.markdown("🔗 **[Ver Escolas Cadastradas](https://colegiopauliceia.com/school/cadastro.html)**")
-
-# ==============================
-# LISTAR ESCOLAS COM DETALHES
-# ==============================
-st.header("🏫 Escolas Cadastradas")
-try:
-    response = requests.get("https://colegiopauliceia.com/school/api.php?secret=10XP20to30", timeout=5)
-    if response.status_code == 200:
-        schools = response.json()
-        if schools:
-            df = pd.DataFrame(schools)
-            # Mostrar colunas disponíveis
-            cols = ['name', 'estado', 'valor_liquido', 'total_alunos', 'receita_total', 'ebitda_ajustado']
-            cols = [c for c in cols if c in df.columns]
-            if cols:
-                st.dataframe(df[cols].rename(columns={
-                    'name': 'Nome',
-                    'estado': 'Estado',
-                    'valor_liquido': 'Valor Líquido',
-                    'total_alunos': 'Alunos',
-                    'receita_total': 'Receita Anual',
-                    'ebitda_ajustado': 'EBITDA'
-                }).style.format({
-                    'Valor Líquido': 'R$ {:,.0f}',
-                    'Receita Anual': 'R$ {:,.0f}',
-                    'EBITDA': 'R$ {:,.0f}'
-                }))
-            else:
-                st.info("Escolas cadastradas, mas sem dados detalhados.")
-        else:
-            st.info("Nenhuma escola cadastrada ainda.")
-    else:
-        st.warning(f"Erro ao carregar escolas: {response.status_code}")
-except Exception as e:
-    st.info("Lista de escolas temporariamente indisponível.")
 
 # ==============================
 # VALUATION COMPLETO
@@ -126,39 +90,6 @@ valor_bruto = valor_ebitda + valor_imovel
 if tem_imovel == "Não":
     valor_bruto += valor_instalacoes
 valor_liquido = valor_bruto - total_passivos
-
-# ==============================
-# BOTÃO PARA SALVAR COMPLETO
-# ==============================
-if st.button("💾 Salvar Valuation Completo"):
-    school_data = {
-        "name": f"Escola_{datetime.now().strftime('%Y%m%d_%H%M')}",
-        "estado": "SP",
-        "valor_liquido": valor_liquido,
-        "total_alunos": total_alunos,
-        "receita_total": receita_total,
-        "ebitda_ajustado": ebitda_ajustado,
-        "taxa_ocupacao": taxa_ocupacao,
-        "custos_diretos": custos_diretos,
-        "despesas_admin": despesas_admin,
-        "aluguel_anual": aluguel_anual,
-        "valor_imovel": valor_imovel,
-        "valor_instalacoes": valor_instalacoes,
-        "total_passivos": total_passivos
-    }
-    try:
-        response = requests.post(
-            "https://colegiopauliceia.com/school/api.php?secret=10XP20to30",
-            json=school_data,
-            timeout=10
-        )
-        if response.status_code == 200:
-            st.success("✅ Valuation salvo com sucesso!")
-            st.experimental_rerun()
-        else:
-            st.error("❌ Erro ao salvar escola")
-    except Exception as e:
-        st.error(f"❌ Falha na conexão: {str(e)}")
 
 # ==============================
 # RESULTADO FINAL COM GRÁFICOS
