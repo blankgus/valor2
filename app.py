@@ -44,7 +44,7 @@ try:
         else:
             st.info("Nenhuma escola cadastrada ainda.")
     else:
-        st.warning("Não foi possível carregar a lista de escolas.")
+        st.warning(f"Erro ao carregar escolas: {response.status_code}")
 except Exception as e:
     st.info("Lista de escolas temporariamente indisponível.")
 
@@ -178,6 +178,34 @@ receita_data = {
     "EM": receita_em
 }
 st.bar_chart(receita_data)
+
+# ==============================
+# GERAR RELATÓRIO EM PDF
+# ==============================
+if st.button("📄 Gerar Relatório em PDF"):
+    from fpdf import FPDF
+    
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, "Relatório de Valuation", ln=True, align="C")
+    pdf.ln(10)
+    
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, f"Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
+    pdf.cell(0, 10, f"Valor Líquido: R$ {valor_liquido:,.2f}", ln=True)
+    pdf.cell(0, 10, f"EBITDA Ajustado: R$ {ebitda_ajustado:,.2f}", ln=True)
+    pdf.cell(0, 10, f"Taxa de Ocupação: {taxa_ocupacao:.1%}", ln=True)
+    pdf.cell(0, 10, f"Total de Alunos: {total_alunos}", ln=True)
+    pdf.cell(0, 10, f"Receita Anual: R$ {receita_total:,.2f}", ln=True)
+    
+    pdf_output = pdf.output(dest="S").encode("latin-1")
+    st.download_button(
+        "📥 Baixar PDF",
+        pdf_output,
+        "relatorio_valuation.pdf",
+        "application/pdf"
+    )
 
 # ==============================
 # EXPORTAR EM EXCEL COMPLETO
