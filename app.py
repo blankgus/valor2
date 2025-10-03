@@ -155,7 +155,6 @@ checklist = [
 ]
 df_checklist = pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "Observações"])
 st.dataframe(df_checklist, use_container_width=True)
-
 # ==============================
 # GERAR PDF COMPLETO (COM SUPORTE A UTF-8)
 # ==============================
@@ -200,4 +199,5 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
+
 
