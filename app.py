@@ -23,10 +23,10 @@ with col1:
     capacidade_em = st.number_input("Capacidade máxima (EM)", min_value=1, value=120)
 
 with col2:
-    mensalidade_ei = st.number_input("Mensalidade média (EI)", min_value=0.0, value=600.0)
-    mensalidade_ef1 = st.number_input("Mensalidade média (EF1)", min_value=0.0, value=750.0)
-    mensalidade_ef2 = st.number_input("Mensalidade média (EF2)", min_value=0.0, value=900.0)
-    mensalidade_em = st.number_input("Mensalidade média (EM)", min_value=0.0, value=1100.0)
+    mensalidade_ei = st.number_input("Mensalidade média (EI)", min_value=0.0, value=1715.0)
+    mensalidade_ef1 = st.number_input("Mensalidade média (EF1)", min_value=0.0, value=2055.0)
+    mensalidade_ef2 = st.number_input("Mensalidade média (EF2)", min_value=0.0, value=2160.0)
+    mensalidade_em = st.number_input("Mensalidade média (EM)", min_value=0.0, value=2450.0)
 
 st.header("2. Custos, Estrutura e Passivos")
 col3, col4 = st.columns(2)
@@ -194,5 +194,6 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
+
 
 
