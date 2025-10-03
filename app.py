@@ -84,39 +84,51 @@ if tem_imovel == "Não":
 valor_liquido = valor_bruto - total_passivos
 
 # ==============================
-# RESUMO DOS DADOS
+# DADOS PARA DCF (Fluxo de Caixa Descontado)
 # ==============================
-st.subheader("📋 Resumo dos Dados Calculados")
-resumo_data = {
-    "Item": [
-        "Valor Líquido",
-        "EBITDA Ajustado",
-        "Receita Anual",
-        "Total de Alunos",
-        "Taxa de Ocupação",
-        "Custos Diretos",
-        "Despesas Administrativas",
-        "Aluguel Anual",
-        "Valor do Imóvel",
-        "Valor das Instalações",
-        "Dívidas Totais"
+st.header("4. Parâmetros para DCF")
+col_dcf1, col_dcf2, col_dcf3 = st.columns(3)
+taxa_crescimento = col_dcf1.slider("Taxa de crescimento anual (%)", 0.0, 15.0, 5.0) / 100
+periodo_explicito = col_dcf2.slider("Período explícito (anos)", 3, 10, 5)
+wacc = col_dcf3.slider("WACC (%)", 8.0, 20.0, 12.0) / 100
+
+# Projeção de fluxo de caixa
+fcf_atual = ebitda_ajustado * (1 - impostos_percent)  # FCF ≈ EBITDA * (1 - impostos)
+fcf_projetado = []
+valor_terminal = 0
+
+for ano in range(1, periodo_explicito + 1):
+    fcf_ano = fcf_atual * ((1 + taxa_crescimento) ** ano)
+    fcf_projetado.append(fcf_ano)
+    if ano == periodo_explicito:
+        valor_terminal = fcf_ano * (1 + 0.025) / (wacc - 0.025)
+
+# Cálculo do DCF
+vp_fcf = sum(fcf_projetado[i] / ((1 + wacc) ** (i + 1)) for i in range(len(fcf_projetado)))
+vp_terminal = valor_terminal / ((1 + wacc) ** periodo_explicito)
+valor_dcf = vp_fcf + vp_terminal
+
+# Valor final combinado (média simples)
+valor_final_combinado = (valor_bruto + valor_dcf) / 2
+
+# ==============================
+# RESUMO DOS VALUATIONS
+# ==============================
+st.subheader("📋 Valuation por Método")
+valuation_data = {
+    "Método": [
+        "EBITDA + Patrimônio",
+        "DCF (Fluxo de Caixa)",
+        "Valor Final Sugerido"
     ],
-    "Valor": [
-        f"R$ {valor_liquido:,.2f}",
-        f"R$ {ebitda_ajustado:,.2f}",
-        f"R$ {receita_total:,.2f}",
-        total_alunos,
-        f"{taxa_ocupacao:.1%}",
-        f"R$ {custos_diretos:,.2f}",
-        f"R$ {despesas_admin:,.2f}",
-        f"R$ {aluguel_anual:,.2f}",
-        f"R$ {valor_imovel:,.2f}",
-        f"R$ {valor_instalacoes:,.2f}",
-        f"R$ {total_passivos:,.2f}"
+    "Valor (R$)": [
+        f"R$ {valor_bruto:,.0f}",
+        f"R$ {valor_dcf:,.0f}",
+        f"R$ {valor_final_combinado:,.0f}"
     ]
 }
-df_resumo = pd.DataFrame(resumo_data)
-st.dataframe(df_resumo, use_container_width=True)
+df_valuation = pd.DataFrame(valuation_data)
+st.dataframe(df_valuation, use_container_width=True)
 
 # ==============================
 # GRÁFICOS
@@ -131,9 +143,14 @@ receita_data = {
     "Receita": [receita_ei, receita_ef1, receita_ef2, receita_em]
 }
 df_receita = pd.DataFrame(receita_data)
-
 fig = px.pie(df_receita, values='Receita', names='Segmento', title='Distribuição da Receita')
 st.plotly_chart(fig, use_container_width=True)
+
+st.subheader("⚖️ Comparação de Métodos")
+metodos = ["EBITDA + Patrimônio", "DCF"]
+valores = [valor_bruto, valor_dcf]
+df_comp = pd.DataFrame({"Método": metodos, "Valor": valores})
+st.bar_chart(df_comp.set_index("Método"))
 
 # ==============================
 # TEASER PARA COMPRADORES
@@ -144,9 +161,8 @@ Escola com {total_alunos} alunos ({taxa_ocupacao:.1%} de ocupação),
 faturamento de R$ {receita_total:,.0f} e EBITDA de R$ {ebitda_ajustado:,.0f}.
 Imóvel próprio incluso (R$ {valor_imovel:,.0f}).
 Passivos: R$ {total_passivos:,.0f}.
-Valor líquido: R$ {valor_liquido:,.0f}.
+**Valor final sugerido: R$ {valor_final_combinado:,.0f}**.
 """
-
 st.text_area("Copie e envie para potenciais compradores:", teaser_text, height=200)
 
 # ==============================
