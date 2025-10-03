@@ -5,7 +5,7 @@ import io
 from datetime import datetime
 
 st.set_page_config(page_title="SchoolValuation Pro+ v10", layout="wide")
-st.title("🏫 SchoolValuation Pro+ v10")
+st.title("SchoolValuation Pro+ v10")
 
 # ==============================
 # DADOS OPERACIONAIS
@@ -88,7 +88,7 @@ valor_liquido = valor_bruto - total_passivos
 # ==============================
 # RESUMO DOS DADOS
 # ==============================
-st.subheader("📋 Resumo dos Dados Calculados")
+st.subheader("Resumo dos Dados Calculados")
 resumo_data = {
     "Item": [
         "Valor Líquido",
@@ -123,11 +123,11 @@ st.dataframe(df_resumo, use_container_width=True)
 # ==============================
 # GRÁFICOS
 # ==============================
-st.subheader("📊 Gráfico de Ocupação")
+st.subheader("Gráfico de Ocupação")
 st.progress(int(taxa_ocupacao * 100))
 st.caption(f"Ocupação: {taxa_ocupacao:.1%} ({total_alunos}/{capacidade_total} alunos)")
 
-st.subheader("📈 Distribuição de Receita por Segmento")
+st.subheader("Distribuição de Receita por Segmento")
 receita_data = {
     "EI": receita_ei,
     "EF1": receita_ef1,
@@ -139,19 +139,19 @@ st.bar_chart(receita_data)
 # ==============================
 # DUE DILIGENCE CHECKLIST
 # ==============================
-st.subheader("🔍 Due Diligence Checklist")
+st.subheader("Due Diligence Checklist")
 checklist = [
-    ["Financeiro", "Balanço auditado (3 anos)", "✅", ""],
-    ["Financeiro", "Demonstração de fluxo de caixa", "✅", ""],
-    ["Financeiro", "Dívidas fiscais quitadas", "✅" if divida_fiscal == 0 else "❌", ""],
-    ["Legal", "Contrato social atualizado", "✅", ""],
-    ["Legal", "Licenças de funcionamento", "✅", ""],
-    ["Legal", "Processos judiciais", "✅", ""],
-    ["Operacional", "Histórico de evasão (3 anos)", "✅", ""],
-    ["Operacional", "Contratos de aluguel", "✅" if tem_imovel == "Não" else "N/A", ""],
-    ["Operacional", "Laudo de avaliação do imóvel", "✅" if tem_imovel == "Sim" else "N/A", ""],
-    ["Pedagógico", "Certificações internacionais", "✅", ""],
-    ["Pedagógico", "Currículo Lattes dos coordenadores", "✅", ""],
+    ["Financeiro", "Balanço auditado (3 anos)", "", ""],
+    ["Financeiro", "Demonstração de fluxo de caixa", "X", ""],
+    ["Financeiro", "Dívidas fiscais quitadas", "X" if divida_fiscal == 0 else "❌", ""],
+    ["Legal", "Contrato social atualizado", "X", ""],
+    ["Legal", "Licenças de funcionamento", "X", ""],
+    ["Legal", "Processos judiciais", "X", ""],
+    ["Operacional", "Histórico de evasão (3 anos)", "OK", ""],
+    ["Operacional", "Contratos de aluguel", "OK" if tem_imovel == "Não" else "N/A", ""],
+    ["Operacional", "Laudo de avaliação do imóvel", "OK" if tem_imovel == "Sim" else "N/A", ""],
+    ["Pedagógico", "Certificações internacionais", "OK", ""],
+    ["Pedagógico", "Currículo Lattes dos coordenadores", "OK", ""],
 ]
 df_checklist = pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "Observações"])
 st.dataframe(df_checklist, use_container_width=True)
@@ -189,7 +189,7 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
     # Gera PDF sem codificação manual
     pdf_output = pdf.output(dest="S")
     st.download_button(
-        "📥 Baixar Relatório Completo",
+        "Baixar Relatório Completo",
         pdf_output,
         "relatorio_valuation_completo.pdf",
         "application/pdf"
@@ -198,6 +198,7 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
+
 
 
 
