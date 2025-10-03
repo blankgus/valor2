@@ -13,14 +13,14 @@ st.title("🏫 SchoolValuation Pro+ v10")
 st.header("1. Dados Operacionais")
 col1, col2 = st.columns(2)
 with col1:
-    alunos_ei = st.number_input("Alunos - Educação Infantil", min_value=0, value=100)
-    capacidade_ei = st.number_input("Capacidade máxima (EI)", min_value=1, value=120)
-    alunos_ef1 = st.number_input("Alunos - Ensino Fundamental I", min_value=0, value=120)
-    capacidade_ef1 = st.number_input("Capacidade máxima (EF1)", min_value=1, value=140)
-    alunos_ef2 = st.number_input("Alunos - Ensino Fundamental II", min_value=0, value=100)
-    capacidade_ef2 = st.number_input("Capacidade máxima (EF2)", min_value=1, value=120)
-    alunos_em = st.number_input("Alunos - Ensino Médio", min_value=0, value=80)
-    capacidade_em = st.number_input("Capacidade máxima (EM)", min_value=1, value=100)
+    alunos_ei = st.number_input("Alunos - Educação Infantil", min_value=0, value=22)
+    capacidade_ei = st.number_input("Capacidade máxima (EI)", min_value=1, value=38)
+    alunos_ef1 = st.number_input("Alunos - Ensino Fundamental I", min_value=0, value=87)
+    capacidade_ef1 = st.number_input("Capacidade máxima (EF1)", min_value=1, value=156)
+    alunos_ef2 = st.number_input("Alunos - Ensino Fundamental II", min_value=0, value=123)
+    capacidade_ef2 = st.number_input("Capacidade máxima (EF2)", min_value=1, value=169)
+    alunos_em = st.number_input("Alunos - Ensino Médio", min_value=0, value=66)
+    capacidade_em = st.number_input("Capacidade máxima (EM)", min_value=1, value=120)
 
 with col2:
     mensalidade_ei = st.number_input("Mensalidade média (EI)", min_value=0.0, value=600.0)
@@ -194,4 +194,5 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
+
 
