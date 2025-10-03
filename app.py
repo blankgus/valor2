@@ -156,44 +156,45 @@ df_checklist = pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "
 st.dataframe(df_checklist, use_container_width=True)
 
 # ==============================
-# GERAR PDF COMPLETO (SEM ERROS)
+# GERAR PDF COMPLETO (COM FONTE UNICODE)
 # ==============================
-if st.button("Gerar Relatorio Completo em PDF"):
+if st.button("Gerar Relatório Completo em PDF"):
+    from fpdf import FPDF
+    
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # Titulo
-    pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 10, "Relatorio de Valuation - Escola", ln=True, align="C")
+    # Adiciona a fonte Unicode
+    pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+    pdf.set_font('DejaVu', '', 12)
+    
+    # Título
+    pdf.cell(0, 10, "Relatório de Valuation - Escola", ln=True, align="C")
     pdf.ln(10)
     
     # Resumo
-    pdf.set_font("Helvetica", "B", 12)
     pdf.cell(0, 10, "Resumo dos Dados Calculados", ln=True)
-    pdf.set_font("Helvetica", size=10)
     for i in range(len(resumo_data["Item"])):
         linha = f"{resumo_data['Item'][i]}: {resumo_data['Valor'][i]}"
         pdf.multi_cell(0, 8, linha)
     
     pdf.ln(5)
-    pdf.set_font("Helvetica", "B", 12)
     pdf.cell(0, 10, "Due Diligence Checklist", ln=True)
-    pdf.set_font("Helvetica", size=10)
     for item in checklist:
         linha = f"{item[0]} - {item[1]}: {item[2]}"
         pdf.multi_cell(0, 8, linha)
     
     pdf_output = pdf.output(dest="S")
     st.download_button(
-        "Baixar Relatorio Completo",
+        "Baixar Relatório Completo",
         pdf_output,
         "relatorio_valuation_completo.pdf",
         "application/pdf"
     )
-
 # ==============================
 # LINK PARA VPS
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
+
