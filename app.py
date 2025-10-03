@@ -157,7 +157,7 @@ df_checklist = pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "
 st.dataframe(df_checklist, use_container_width=True)
 
 # ==============================
-# GERAR PDF COMPLETO (UTF-8)
+# GERAR PDF COMPLETO (SEM ERROS)
 # ==============================
 if st.button("📄 Gerar Relatório Completo em PDF"):
     pdf = FPDF()
@@ -170,22 +170,26 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
     pdf.ln(10)
     
     # Resumo
-    pdf.set_font("Arial", "B", 14)
+    pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, "Resumo dos Dados Calculados", ln=True)
     pdf.set_font("Arial", size=10)
     for i in range(len(resumo_data["Item"])):
-        pdf.cell(0, 8, f"{resumo_data['Item'][i]}: {resumo_data['Valor'][i]}", ln=True)
+        linha = f"{resumo_data['Item'][i]}: {resumo_data['Valor'][i]}"
+        # Remove caracteres problemáticos para PDF
+        linha = linha.replace("–", "-").replace("—", "-")
+        pdf.cell(0, 8, linha.encode('latin-1', 'replace').decode('latin-1'), ln=True)
     
     pdf.ln(5)
-    pdf.set_font("Arial", "B", 14)
+    pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, "Due Diligence Checklist", ln=True)
     pdf.set_font("Arial", size=10)
     for item in checklist:
-        status = item[2]
-        pdf.cell(0, 8, f"{item[0]} - {item[1]}: {status}", ln=True)
+        linha = f"{item[0]} - {item[1]}: {item[2]}"
+        linha = linha.replace("–", "-").replace("—", "-")
+        pdf.cell(0, 8, linha.encode('latin-1', 'replace').decode('latin-1'), ln=True)
     
-    # Output em UTF-8
-    pdf_output = pdf.output(dest="S").encode("utf-8")
+    # Output seguro
+    pdf_output = pdf.output(dest="S")
     st.download_button(
         "📥 Baixar Relatório Completo",
         pdf_output,
@@ -198,5 +202,3 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
-
-
