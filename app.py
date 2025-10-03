@@ -193,11 +193,11 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
         pdf_output,
         "relatorio_valuation_completo.pdf",
         "application/pdf"
-    )
-# ==============================
+    )# ==============================
 # LINK PARA VPS
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
+
 
 
