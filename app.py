@@ -143,7 +143,7 @@ st.subheader("Due Diligence Checklist")
 checklist = [
     ["Financeiro", "Balanço auditado (3 anos)", "", ""],
     ["Financeiro", "Demonstração de fluxo de caixa", "X", ""],
-    ["Financeiro", "Dívidas fiscais quitadas", "X" if divida_fiscal == 0 else "❌", ""],
+    ["Financeiro", "Dívidas fiscais quitadas", "X" if divida_fiscal == 0 else "N", ""],
     ["Legal", "Contrato social atualizado", "X", ""],
     ["Legal", "Licenças de funcionamento", "X", ""],
     ["Legal", "Processos judiciais", "X", ""],
@@ -198,6 +198,7 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
+
 
 
 
