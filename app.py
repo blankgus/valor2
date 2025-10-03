@@ -14,7 +14,7 @@ st.header("1. Dados Operacionais")
 col1, col2 = st.columns(2)
 with col1:
     alunos_ei = st.number_input("Alunos - Educação Infantil", min_value=0, value=22)
-    capacidade_ei = st.number_input("Capacidade máxima (EI)", min_value=1, value=38)
+    capacidade_ei = st.number_input("Capacidade máxima (EI)", min_value=1, value=36)
     alunos_ef1 = st.number_input("Alunos - Ensino Fundamental I", min_value=0, value=87)
     capacidade_ef1 = st.number_input("Capacidade máxima (EF1)", min_value=1, value=156)
     alunos_ef2 = st.number_input("Alunos - Ensino Fundamental II", min_value=0, value=123)
@@ -31,7 +31,7 @@ with col2:
 st.header("2. Custos, Estrutura e Passivos")
 col3, col4 = st.columns(2)
 with col3:
-    custos_diretos_percent = st.slider("Custos diretos (%)", 0, 100, 40) / 100
+    custos_diretos_percent = st.slider("Custos diretos (%)", 0, 100, 25) / 100
     despesas_admin_percent = st.slider("Despesas administrativas (%)", 0, 100, 15) / 100
     impostos_percent = st.slider("Impostos (%)", 0, 30, 8) / 100
 
@@ -46,8 +46,7 @@ with col4:
         valor_instalacoes = st.number_input(
             "Valor estimado das instalações (R$)", 
             min_value=0.0, 
-            value=500000.0,
-            help="Ex: laboratórios, quadras, mobiliário, tecnologia."
+            value=500000.0
         )
     divida_fiscal = st.number_input("Dívidas fiscais (R$)", min_value=0.0, value=0.0)
     divida_financeira = st.number_input("Dívidas financeiras (R$)", min_value=0.0, value=0.0)
@@ -128,7 +127,7 @@ st.subheader("📊 Gráfico de Ocupação")
 st.progress(int(taxa_ocupacao * 100))
 st.caption(f"Ocupação: {taxa_ocupacao:.1%} ({total_alunos}/{capacidade_total} alunos)")
 
-st.subheader("📈 Distribuição de Receita")
+st.subheader("📈 Distribuição de Receita por Segmento")
 receita_data = {
     "EI": receita_ei,
     "EF1": receita_ef1,
@@ -158,30 +157,35 @@ df_checklist = pd.DataFrame(checklist, columns=["Categoria", "Item", "Status", "
 st.dataframe(df_checklist, use_container_width=True)
 
 # ==============================
-# GERAR PDF COMPLETO
+# GERAR PDF COMPLETO (UTF-8)
 # ==============================
 if st.button("📄 Gerar Relatório Completo em PDF"):
     pdf = FPDF()
     pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # Título
     pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, "Relatório de Valuation - Escola", ln=True, align="C")
     pdf.ln(10)
     
+    # Resumo
     pdf.set_font("Arial", "B", 14)
     pdf.cell(0, 10, "Resumo dos Dados Calculados", ln=True)
-    pdf.set_font("Arial", size=12)
+    pdf.set_font("Arial", size=10)
     for i in range(len(resumo_data["Item"])):
         pdf.cell(0, 8, f"{resumo_data['Item'][i]}: {resumo_data['Valor'][i]}", ln=True)
     
-    pdf.ln(10)
+    pdf.ln(5)
     pdf.set_font("Arial", "B", 14)
     pdf.cell(0, 10, "Due Diligence Checklist", ln=True)
-    pdf.set_font("Arial", size=12)
+    pdf.set_font("Arial", size=10)
     for item in checklist:
-        status = "OK" if item[2] == "✅" else item[2]
+        status = item[2]
         pdf.cell(0, 8, f"{item[0]} - {item[1]}: {status}", ln=True)
     
-    pdf_output = pdf.output(dest="S").encode("utf-8")
+    # Output em UTF-8
+    pdf_output = pdf.output(dest="S").encode("latin-1", errors="replace")
     st.download_button(
         "📥 Baixar Relatório Completo",
         pdf_output,
@@ -194,6 +198,3 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
-
-
-
