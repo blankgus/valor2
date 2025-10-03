@@ -181,7 +181,7 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
         status = "OK" if item[2] == "✅" else item[2]
         pdf.cell(0, 8, f"{item[0]} - {item[1]}: {status}", ln=True)
     
-    pdf_output = pdf.output(dest="S").encode("latin-1")
+    pdf_output = pdf.output(dest="S").encode("utf-8")
     st.download_button(
         "📥 Baixar Relatório Completo",
         pdf_output,
@@ -194,3 +194,4 @@ if st.button("📄 Gerar Relatório Completo em PDF"):
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
+
