@@ -14,11 +14,11 @@ with col1:
     alunos_ei = st.number_input("Alunos - Educação Infantil", min_value=0, value=22)
     capacidade_ei = st.number_input("Capacidade máxima (EI)", min_value=1, value=36)
     alunos_ef1 = st.number_input("Alunos - Ensino Fundamental I", min_value=0, value=87)
-    capacidade_ef1 = st.number_input("Capacidade máxima (EF1)", min_value=1, value=156)
+    capacidade_ef1 = st.number_input("Capacidade máxima (EF1)", min_value=1, value=176)
     alunos_ef2 = st.number_input("Alunos - Ensino Fundamental II", min_value=0, value=123)
-    capacidade_ef2 = st.number_input("Capacidade máxima (EF2)", min_value=1, value=169)
+    capacidade_ef2 = st.number_input("Capacidade máxima (EF2)", min_value=1, value=189)
     alunos_em = st.number_input("Alunos - Ensino Médio", min_value=0, value=66)
-    capacidade_em = st.number_input("Capacidade máxima (EM)", min_value=1, value=120)
+    capacidade_em = st.number_input("Capacidade máxima (EM)", min_value=1, value=140)
 
 with col2:
     mensalidade_ei = st.number_input("Mensalidade média (EI)", min_value=0.0, value=1715.0)
@@ -190,3 +190,4 @@ st.dataframe(df_checklist, use_container_width=True)
 # ==============================
 st.markdown("---")
 st.markdown("🔗 **[Gerenciar Escolas no VPS](https://colegiopauliceia.com/school/)**")
+
